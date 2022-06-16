@@ -101,7 +101,7 @@ simple_example_templ.inputs.artifacts = {"inp_art": InputArtifact(path="/tmp/foo
 simple_example_templ.outputs.parameters = {
     "msg": OutputParameter(value_from_path="/tmp/msg.txt")
 }
-simple_example_templ.outputs.parameters = {
+simple_example_templ.outputs.artifacts = {
     "out_art": OutputArtifact(path="/tmp/bar.txt")
 }
 ```
