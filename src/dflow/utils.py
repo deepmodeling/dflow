@@ -167,9 +167,12 @@ def copy_artifact(src, dst, sort=False) -> S3Artifact:
     if sort:
         src_catalog = catalog_of_artifact(src)
         dst_catalog = catalog_of_artifact(dst)
-        if src_catalog and dst_catalog:
-            offset = max(dst_catalog,
-                         key=lambda item: item["order"])["order"] + 1
+        if src_catalog:
+            if dst_catalog:
+                offset = max(dst_catalog,
+                            key=lambda item: item["order"])["order"] + 1
+            else:
+                offset = 0
             for item in src_catalog:
                 item["order"] += offset
             with tempfile.TemporaryDirectory() as tmpdir:

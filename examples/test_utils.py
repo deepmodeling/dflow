@@ -1,9 +1,10 @@
 import os
+import uuid
 import shutil
 from pathlib import Path
 
 import pytest
-from dflow import copy_artifact, upload_artifact
+from dflow import copy_artifact, upload_artifact, S3Artifact
 from dflow.utils import catalog_of_artifact, run_command, set_directory
 
 
@@ -55,3 +56,16 @@ def test_copy_artifact():
 
     os.remove("foo.txt")
     os.remove("bar.txt")
+
+
+def test_copy_artifact_dst_none():
+    with open("foo_1.txt", "w"):
+        pass
+    art_1 = S3Artifact(key=f"test-{uuid.uuid4()}")
+    art_2 = upload_artifact(["foo_1.txt"], archive=None)
+    copy_artifact(art_2, art_1, sort=True)
+    catalog = catalog_of_artifact(art_1)
+    catalog.sort(key=lambda x: x["order"])
+    assert catalog == [{'dflow_list_item': 'foo_1.txt', 'order': 0}]
+
+    os.remove("foo_1.txt")
