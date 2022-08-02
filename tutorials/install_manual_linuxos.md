@@ -28,7 +28,7 @@ This guide is copied from: https://docs.docker.com/engine/install/ubuntu/#instal
 
     ```console
     $ sudo mkdir -p /etc/apt/keyrings
-    $ curl -fsSL {{ download-url-base }}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     ```
 
 3.  Use the following command to set up the repository:
