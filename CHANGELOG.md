@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [1.8.86](https://github.com/deepmodeling/dflow/compare/v1.8.85...v1.8.86) (2024-08-07)
+
+
+### Bug Fixes
+
+* multiprocessing in debug mode ([fe6fdd2](https://github.com/deepmodeling/dflow/commit/fe6fdd21089baf1684f87ec20a4e948dc4e2086b))
+
 ## [1.8.85](https://github.com/deepmodeling/dflow/compare/v1.8.84...v1.8.85) (2024-08-06)
 
 
