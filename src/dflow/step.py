@@ -722,7 +722,8 @@ class Step:
                 self.template.set_slices(self.template.slices)
                 self.with_param = argo_range(if_expression(
                     "%s %% %s > 0" % (nslices, group_size),
-                    "%s/%s + 1" % (nslices, group_size),
+                    "(%s - %s %% %s) / %s + 1" % (nslices,
+                                                  nslices, group_size, group_size),
                     "%s/%s" % (nslices, group_size)))
             elif self.with_param is not None:
                 self.template.inputs.parameters["dflow_with_param"] = \
@@ -745,7 +746,8 @@ class Step:
                 self.template.set_slices(self.template.slices)
                 self.with_param = argo_range(if_expression(
                     "%s %% %s > 0" % (nslices, group_size),
-                    "%s/%s + 1" % (nslices, group_size),
+                    "(%s - %s %% %s) / %s + 1" % (nslices,
+                                                  nslices, group_size, group_size),
                     "%s/%s" % (nslices, group_size)))
             if self.with_sequence is not None:
                 self.template.inputs.parameters["dflow_sequence_start"] = \
@@ -799,7 +801,8 @@ class Step:
                 self.with_sequence = argo_sequence(
                     count=if_expression(
                         "%s %% %s > 0" % (nslices, group_size),
-                        "%s/%s + 1" % (nslices, group_size),
+                        "(%s - %s %% %s) / %s + 1" % (nslices,
+                                                      nslices, group_size, group_size),
                         "%s/%s" % (nslices, group_size)), format=format)
 
             self.inputs.parameters["dflow_nslices"] = InputParameter(
@@ -932,6 +935,7 @@ class Step:
                 }
             )
         elif self.continue_on_success_ratio is not None:
+            total = 1
             if "dflow_nslices" in self.inputs.parameters:
                 total = self.inputs.parameters["dflow_nslices"].value
             elif self.with_param is not None:
