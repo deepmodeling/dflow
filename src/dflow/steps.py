@@ -9,7 +9,7 @@ from .common import (input_artifact_pattern, input_parameter_pattern,
                      step_output_parameter_pattern)
 from .config import config, s3_config
 from .context_syntax import GLOBAL_CONTEXT
-from .io import Inputs, Outputs
+from .io import Inputs, Outputs, OutputArtifact
 from .op_template import OPTemplate
 from .step import Step, add_slices
 from .utils import ProcessPoolExecutor
@@ -285,6 +285,9 @@ class Steps(OPTemplate):
                                 step[j].outputs.parameters[
                                     name].value = value
                             for name, path in arts.items():
+                                if name not in step[j].outputs.artifacts:
+                                    step[j].outputs.artifacts[name] = \
+                                        OutputArtifact()
                                 step[j].outputs.artifacts[
                                     name].local_path = path
                             logging.info("Outputs of %s collected" % step[j])
