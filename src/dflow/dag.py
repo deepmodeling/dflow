@@ -9,7 +9,7 @@ from .common import (input_artifact_pattern, input_parameter_pattern,
                      task_output_parameter_pattern)
 from .config import config, s3_config
 from .context_syntax import GLOBAL_CONTEXT
-from .io import Inputs, Outputs
+from .io import Inputs, Outputs, OutputArtifact
 from .op_template import OPTemplate
 from .step import add_slices
 from .task import Task
@@ -281,6 +281,9 @@ class DAG(OPTemplate):
                     self.tasks[j].outputs.parameters[
                         name].value = value
                 for name, path in arts.items():
+                    if name not in self.tasks[j].outputs.artifacts:
+                        self.tasks[j].outputs.artifacts[name] = \
+                            OutputArtifact()
                     self.tasks[j].outputs.artifacts[
                         name].local_path = path
                 self.tasks[j].phase = phase
