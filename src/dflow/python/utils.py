@@ -181,7 +181,7 @@ def handle_input_parameter(name, value, sign, slices=None, data_root="/tmp"):
         for item in jsonpickle.loads(value):
             dflow_list += jsonpickle.loads(item)
         obj = convert_dflow_list(dflow_list)
-    elif isinstance(sign, BigParameter) and config["mode"] != "debug":
+    elif isinstance(sign, BigParameter):
         with open(data_root + "/inputs/parameters/" + name, "r") as f:
             content = jsonpickle.loads(f.read())
             obj = content
@@ -330,7 +330,7 @@ def handle_output_parameter(name, value, sign, slices=None, data_root="/tmp"):
             res = [{"dflow_list_item": value, "order": slices}]
         with open(data_root + '/outputs/parameters/' + name, 'w') as f:
             f.write(jsonpickle.dumps(res))
-    elif isinstance(sign, BigParameter) and config["mode"] != "debug":
+    elif isinstance(sign, BigParameter):
         with open(data_root + "/outputs/parameters/" + name, "w") as f:
             f.write(jsonpickle.dumps(value))
     else:

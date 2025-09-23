@@ -312,8 +312,7 @@ class OP(ABC):
                         if hasattr(s, "default"):
                             kw["value"] = s.default
                         if isinstance(s, BigParameter):
-                            kw["save_as_artifact"] = (
-                                config["mode"] != "debug")
+                            kw["save_as_artifact"] = True
                     else:
                         kw["type"] = s
                     dag.inputs.parameters[n] = InputParameter(**kw)
@@ -330,8 +329,7 @@ class OP(ABC):
                         if hasattr(s, "default"):
                             kw["default"] = s.default
                         if isinstance(s, BigParameter):
-                            kw["save_as_artifact"] = (
-                                config["mode"] != "debug")
+                            kw["save_as_artifact"] = True
                     else:
                         kw["type"] = s
                     kw["value_from_parameter"] = outputs.get(n)

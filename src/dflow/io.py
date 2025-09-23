@@ -432,8 +432,6 @@ class InputParameter(ArgoVar):
         if "value" in kwargs:
             self.value = kwargs["value"]
         self.save_as_artifact = save_as_artifact
-        if config["mode"] == "debug":
-            self.save_as_artifact = False
         self.path = path
         self.source = source
         for k, v in kwargs.items():
@@ -846,8 +844,6 @@ class OutputParameter(ArgoVar):
         self.value_from_expression = value_from_expression
         self.save_as_artifact = save_as_artifact
         self.save_both = save_both
-        if config["mode"] == "debug":
-            self.save_as_artifact = False
         if "default" in kwargs:
             self.default = kwargs["default"]
         if "value" in kwargs:
