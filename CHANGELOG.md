@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [1.8.130](https://github.com/deepmodeling/dflow/compare/v1.8.129...v1.8.130) (2025-09-23)
+
+
+### Bug Fixes
+
+* implement big parameter in debug mode ([9dc3916](https://github.com/deepmodeling/dflow/commit/9dc3916923e7af0bb4dc709bcc64e59346dd598f))
+
 ## [1.8.129](https://github.com/deepmodeling/dflow/compare/v1.8.128...v1.8.129) (2025-09-16)
 
 
