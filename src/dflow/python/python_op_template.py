@@ -266,12 +266,12 @@ class PythonOPTemplate(PythonScriptOPTemplate):
             elif isinstance(sign, BigParameter):
                 if hasattr(sign, "default"):
                     self.inputs.parameters[name] = InputParameter(
-                        save_as_artifact=config["mode"] != "debug",
+                        save_as_artifact=True,
                         path="%s/inputs/parameters/" % self.tmp_root + name,
                         type=sign.type, value=sign.default)
                 else:
                     self.inputs.parameters[name] = InputParameter(
-                        save_as_artifact=config["mode"] != "debug",
+                        save_as_artifact=True,
                         path="%s/inputs/parameters/" % self.tmp_root + name,
                         type=sign.type)
             elif isinstance(sign, Parameter):
@@ -303,7 +303,7 @@ class PythonOPTemplate(PythonScriptOPTemplate):
                         % (self.tmp_root, name), default="")
             elif isinstance(sign, BigParameter):
                 self.outputs.parameters[name] = OutputParameter(
-                    save_as_artifact=config["mode"] != "debug",
+                    save_as_artifact=True,
                     value_from_path="%s/outputs/parameters/" % self.tmp_root
                     + name, type=sign.type)
             elif isinstance(sign, Parameter):
@@ -582,8 +582,7 @@ class PythonOPTemplate(PythonScriptOPTemplate):
                 if self.skip_slice_input and slices is not None:
                     slices = "(None if {{inputs.parameters.dflow_skip_slice_"\
                         "input}} else %s)" % slices
-                if isinstance(sign, BigParameter) and \
-                        config["mode"] != "debug":
+                if isinstance(sign, BigParameter):
                     script += "    input['%s'] = handle_input_parameter('%s',"\
                         " '', input_sign['%s'], %s, r'%s')\n" \
                         % (name, name, name, slices, self.tmp_root)

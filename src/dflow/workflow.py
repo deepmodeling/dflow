@@ -269,6 +269,8 @@ class Workflow:
                         os.makedirs(os.path.join(stepdir, io, "parameters"),
                                     exist_ok=True)
                         for name, par in step[io].parameters.items():
+                            if hasattr(par, "save_as_artifact"):
+                                continue
                             with open(os.path.join(stepdir, io, "parameters",
                                                    name), "w") as f:
                                 value = par.recover()["value"]
@@ -276,15 +278,28 @@ class Workflow:
                                     f.write(value)
                                 else:
                                     f.write(jsonpickle.dumps(value))
-                            if par.type is not None:
+                            if par.type is not None or hasattr(
+                                    par, "globalName"):
+                                metadata = {"type": type_to_str(par.type)}
+                                if hasattr(par, "globalName"):
+                                    metadata["globalName"] = par.globalName
                                 os.makedirs(os.path.join(
                                     stepdir, io, "parameters/.dflow"),
                                     exist_ok=True)
                                 with open(os.path.join(
                                         stepdir, io, "parameters/.dflow",
                                         name), "w") as f:
-                                    f.write(jsonpickle.dumps({
-                                        "type": type_to_str(par.type)}))
+                                    f.write(jsonpickle.dumps(metadata))
+                            if hasattr(par, "globalName"):
+                                os.makedirs(os.path.join(
+                                    wfdir, io, "parameters"), exist_ok=True)
+                                global_par_path = os.path.join(
+                                    wfdir, io, "parameters", par.globalName)
+                                if os.path.exists(global_par_path):
+                                    os.remove(global_par_path)
+                                os.symlink(os.path.join(
+                                    stepdir, io, "parameters", name),
+                                           global_par_path)
 
                         os.makedirs(os.path.join(stepdir, io, "artifacts"),
                                     exist_ok=True)
@@ -321,6 +336,24 @@ class Workflow:
                             else:
                                 os.symlink(art.local_path, os.path.join(
                                     stepdir, io, "artifacts", name))
+                            if hasattr(art, "globalName"):
+                                metadata = {"globalName": art.globalName}
+                                os.makedirs(os.path.join(
+                                    stepdir, io, "artifacts", ".dflow"),
+                                    exist_ok=True)
+                                with open(os.path.join(
+                                        stepdir, io, "artifacts", ".dflow",
+                                        name), "w") as f:
+                                    f.write(jsonpickle.dumps(metadata))
+                                os.makedirs(os.path.join(
+                                    wfdir, io, "artifacts"), exist_ok=True)
+                                global_art_path = os.path.join(
+                                    wfdir, io, "artifacts", art.globalName)
+                                if os.path.exists(global_art_path):
+                                    os.remove(global_art_path)
+                                os.symlink(os.path.join(
+                                    stepdir, io, "artifacts", name),
+                                           global_art_path)
 
             cwd = os.getcwd()
             os.chdir(wfdir)
@@ -1117,25 +1150,35 @@ class Workflow:
                             with open(os.path.join(stepdir, io, "parameters",
                                                    p), "r") as f:
                                 val = f.read()
-                            _type = None
+                            metadata = {"type": None}
                             if os.path.exists(os.path.join(
                                     stepdir, io, "parameters/.dflow", p)):
                                 with open(os.path.join(
                                         stepdir, io, "parameters/.dflow", p),
                                         "r") as f:
-                                    _type = json.load(f)["type"]
+                                    metadata.update(json.load(f))
                                 # for backward compatible
-                                if _type not in ["str", str(str)]:
+                                if metadata["type"] not in ["str", str(str)]:
                                     val = jsonpickle.loads(val)
                             step[io]["parameters"].append({
-                                "name": p, "value": val, "type": _type})
+                                "name": p, "value": val, **metadata})
                     if os.path.exists(os.path.join(stepdir, io, "artifacts")):
                         for a in os.listdir(os.path.join(stepdir, io,
                                                          "artifacts")):
+                            if a == ".dflow":
+                                continue
+                            metadata = {}
+                            if os.path.exists(os.path.join(
+                                    stepdir, io, "artifacts/.dflow", a)):
+                                with open(os.path.join(
+                                        stepdir, io, "artifacts/.dflow", a),
+                                        "r") as f:
+                                    metadata = json.load(f)
                             step[io]["artifacts"].append({
                                 "name": a,
                                 "local_path": os.path.abspath(os.path.join(
                                     stepdir, io, "artifacts", a)),
+                                **metadata,
                             })
                 step = ArgoStep(step, self.id)
                 step_list.append(step)
@@ -1246,6 +1289,8 @@ class Workflow:
             arts = os.path.join(wfdir, "outputs", "artifacts")
             if os.path.exists(arts):
                 for a in os.listdir(arts):
+                    if a == ".dflow":
+                        continue
                     outputs["artifacts"].append({
                         "name": a,
                         "local_path": os.path.abspath(os.path.join(arts, a))})

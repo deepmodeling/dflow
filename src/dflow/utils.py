@@ -87,7 +87,15 @@ def download_artifact(
         skip_exists: skip files with the same MD5
     """
     if getattr(artifact, "local_path", None) is not None:
-        if config["debug_copy_method"] == "symlink":
+        if os.path.isfile(artifact.local_path):
+            target = os.path.join(path, os.path.basename(artifact.local_path))
+            if config["debug_copy_method"] == "symlink":
+                force_link(artifact.local_path, target)
+            elif config["debug_copy_method"] == "link":
+                try_link(artifact.local_path, target)
+            elif config["debug_copy_method"] == "copy":
+                shutil.copy(artifact.local_path, target)
+        elif config["debug_copy_method"] == "symlink":
             linktree(artifact.local_path, path)
         elif config["debug_copy_method"] == "link":
             merge_dir(artifact.local_path, path, try_link)

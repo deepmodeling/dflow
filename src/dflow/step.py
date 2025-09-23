@@ -7,6 +7,7 @@ import shutil
 import sys
 import tarfile
 import time
+import uuid
 from copy import copy, deepcopy
 from typing import Any, Dict, List, Optional, Union
 
@@ -1486,6 +1487,55 @@ class Step:
                 self.phase = "Skipped"
                 return
 
+        for name, par in list(self.inputs.parameters.items()):
+            if par.save_as_artifact:
+                if hasattr(par, "value"):
+                    path = os.path.abspath(
+                        os.path.join("..", config["debug_artifact_dir"],
+                                     "upload/%s/%s" % (uuid.uuid4(), name)))
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    with open(path, "w") as f:
+                        f.write(jsonpickle.dumps(par.value))
+                    self.inputs.artifacts["dflow_bigpar_" + name] = \
+                        InputArtifact(path=par.path, source=S3Artifact(path))
+                elif par.source is not None:
+                    self.inputs.artifacts["dflow_bigpar_" + name] = \
+                        InputArtifact(path=par.path,
+                                      source=get_var(par.source, scope))
+                if "dflow_bigpar_" + name not in \
+                        self.template.inputs.artifacts:
+                    self.template.inputs.artifacts["dflow_bigpar_" + name] = \
+                        InputArtifact(path=par.path)
+                if name in self.template.inputs.parameters:
+                    del self.template.inputs.parameters[name]
+                del self.inputs.parameters[name]
+
+        for name, par in list(self.outputs.parameters.items()):
+            if par.save_as_artifact:
+                if name in self.template.outputs.parameters:
+                    par = self.template.outputs.parameters[name]
+                    kwargs = {
+                        "global_name": "dflow_bigpar_" + par.global_name
+                        if par.global_name is not None else None
+                    }
+                    if par.value_from_path is not None:
+                        art = OutputArtifact(
+                            path=par.value_from_path, **kwargs)
+                    elif par.value_from_parameter is not None:
+                        art = OutputArtifact(
+                            _from=str(par.value_from_parameter), **kwargs)
+                    elif par.value_from_expression is not None:
+                        art = OutputArtifact(from_expression=str(
+                            par.value_from_expression), **kwargs)
+                    self.template.outputs.artifacts[
+                        "dflow_bigpar_" + name] = art
+                    if not par.save_both:
+                        del self.template.outputs.parameters[name]
+                self.outputs.artifacts["dflow_bigpar_" + name] = deepcopy(
+                    self.template.outputs.artifacts["dflow_bigpar_" + name])
+                if not par.save_both:
+                    del self.outputs.parameters[name]
+
         # source input parameters
         parameters = InputParameters({k: copy(v) for k, v in
                                       self.inputs.parameters.items()})
@@ -1783,13 +1833,18 @@ class Step:
                 value = jsonpickle.dumps(par.value)
             with open(par_path, "w") as f:
                 f.write(value)
-            if par.type is not None:
+            if par.type is not None or par.global_name is not None:
+                metadata = {}
+                if par.type is not None:
+                    metadata["type"] = type_to_str(par.type)
+                if par.global_name is not None:
+                    metadata["globalName"] = par.global_name
                 os.makedirs(os.path.join(
                     stepdir, "outputs/parameters/.dflow"), exist_ok=True)
                 with open(os.path.join(
                         stepdir, "outputs/parameters/.dflow/%s" % name),
                         "w") as f:
-                    f.write(jsonpickle.dumps({"type": type_to_str(par.type)}))
+                    f.write(jsonpickle.dumps(metadata))
             if par.global_name is not None:
                 os.makedirs(os.path.join(stepdir, "../outputs/parameters"),
                             exist_ok=True)
@@ -1807,6 +1862,13 @@ class Step:
             art_path = os.path.join(stepdir, "outputs/artifacts/%s" % name)
             force_link(art.local_path, art_path)
             if art.global_name is not None:
+                metadata = {"globalName": art.global_name}
+                os.makedirs(os.path.join(
+                    stepdir, "outputs/artifacts/.dflow"), exist_ok=True)
+                with open(os.path.join(
+                        stepdir, "outputs/artifacts/.dflow/%s" % name),
+                        "w") as f:
+                    f.write(jsonpickle.dumps(metadata))
                 os.makedirs(os.path.join(stepdir, "../outputs/artifacts"),
                             exist_ok=True)
                 global_art_path = os.path.join(
@@ -2326,6 +2388,9 @@ def get_var(expr, scope):
         return None  # ignore
     elif fields == ["workflow", "name"]:
         return InputParameter(value=scope.workflow_id)
+    elif fields[:3] == ["workflow", "outputs", "artifacts"]:
+        return LocalArtifact("%s/../outputs/artifacts/%s" % (
+            scope.stepdir, fields[3]))
     else:
         raise RuntimeError("Not supported: %s" % expr)
 

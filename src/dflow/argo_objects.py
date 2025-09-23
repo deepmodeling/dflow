@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+import shutil
 import tempfile
 import time
 from collections import UserDict, UserList
@@ -166,6 +167,11 @@ class ArgoStep(ArgoObjectDict):
                 path = tmpdir + "/" + name
                 with open(path, "w") as f:
                     f.write(jsonpickle.dumps(value))
+                if config["mode"] == "debug":
+                    path = upload_s3(path, debug_func=shutil.copy)
+                    self.outputs.artifacts[
+                        "dflow_bigpar_" + name].local_path = path
+                    return
                 key = upload_s3(path)
                 s3 = S3Artifact(key=key)
                 if s3_config["repo_type"] == "s3":
