@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [1.8.133](https://github.com/deepmodeling/dflow/compare/v1.8.132...v1.8.133) (2026-01-21)
+
+
+### Bug Fixes
+
+* ignore error in cleaning temp dir ([864b2a1](https://github.com/deepmodeling/dflow/commit/864b2a1a09b2878c23565db5b22117d6af5d35da))
+
 ## [1.8.132](https://github.com/deepmodeling/dflow/compare/v1.8.131...v1.8.132) (2025-09-23)
 
 
