@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import shutil
-import tempfile
 import time
 from collections import UserDict, UserList
 from copy import deepcopy
@@ -13,7 +12,7 @@ from .common import jsonpickle
 from .config import config, s3_config
 from .io import S3Artifact
 from .op_template import get_k8s_client
-from .utils import download_artifact, get_key, upload_s3
+from .utils import TempDir, download_artifact, get_key, upload_s3
 
 try:
     import kubernetes
@@ -82,7 +81,7 @@ class ArgoParameter(ArgoObjectDict):
         if ((key == "value" and "value" not in self.data) or
             (key == "type" and "type" not in self.data)) and \
                 hasattr(self, "save_as_artifact"):
-            with tempfile.TemporaryDirectory() as tmpdir:
+            with TempDir() as tmpdir:
                 try:
                     download_artifact(self, path=tmpdir)
                     fs = os.listdir(tmpdir)
@@ -163,7 +162,7 @@ class ArgoStep(ArgoObjectDict):
             self.outputs.parameters[name].value = jsonpickle.dumps(value)
 
         if hasattr(self.outputs.parameters[name], "save_as_artifact"):
-            with tempfile.TemporaryDirectory() as tmpdir:
+            with TempDir() as tmpdir:
                 path = tmpdir + "/" + name
                 with open(path, "w") as f:
                     f.write(jsonpickle.dumps(value))

@@ -31,6 +31,14 @@ except Exception:
     pass
 
 
+class TempDir(tempfile.TemporaryDirectory):
+    def cleanup(self):
+        try:
+            return super().cleanup()
+        except Exception:
+            pass
+
+
 def get_key(artifact, raise_error=True):
     if hasattr(artifact, "s3") and hasattr(artifact.s3, "key"):
         return artifact.s3.key
@@ -123,7 +131,7 @@ def download_artifact(
     if key[-4:] == ".tgz" and extract:
         path = os.path.join(path, os.path.basename(key))
         tf = tarfile.open(path, "r:gz")
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with TempDir() as tmpdir:
             tf.extractall(tmpdir)
             tf.close()
 
@@ -219,7 +227,7 @@ def upload_artifact(
     if archive == "default":
         archive = config["archive_mode"]
     cwd = os.getcwd()
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TempDir() as tmpdir:
         if isinstance(path, dict) or (isinstance(path, list) and any(
                 [isinstance(p, (list, dict)) for p in path])):
             pairs = flatten(path).items()
@@ -320,7 +328,7 @@ def copy_artifact(src, dst, sort=False, **kwargs) -> S3Artifact:
                          key=lambda item: item["order"])["order"] + 1
             for item in src_catalog:
                 item["order"] += offset
-            with tempfile.TemporaryDirectory() as tmpdir:
+            with TempDir() as tmpdir:
                 catalog_dir = os.path.join(tmpdir, config["catalog_dir_name"])
                 os.makedirs(catalog_dir, exist_ok=True)
                 fpath = os.path.join(catalog_dir, str(uuid.uuid4()))
@@ -487,7 +495,7 @@ def catalog_of_artifact(art, storage_client=None, **kwargs) -> List[dict]:
     else:
         client = MinioClient(**kwargs)
     catalog = []
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TempDir() as tmpdir:
         objs = client.list(prefix=key)
         if len(objs) == 1 and objs[0][-1] == "/":
             key = objs[0]
