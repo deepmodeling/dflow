@@ -1,5 +1,4 @@
 import json
-import tempfile
 from collections import UserDict
 from copy import copy, deepcopy
 from typing import Any, Dict, List, Optional, Union
@@ -7,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from .common import (CustomArtifact, HTTPArtifact, LocalArtifact, S3Artifact,
                      jsonpickle, param_errmsg, param_regex)
 from .config import config
-from .utils import randstr, s3_config, upload_s3
+from .utils import TempDir, randstr, s3_config, upload_s3
 
 try:
     from argo.workflows.client import (V1alpha1ArchiveStrategy,
@@ -517,7 +516,7 @@ class InputParameter(ArgoVar):
                                             path=self.path,
                                             _from=str(self.value))
                 else:
-                    with tempfile.TemporaryDirectory() as tmpdir:
+                    with TempDir() as tmpdir:
                         path = tmpdir + "/" + self.name
                         with open(path, "w") as f:
                             f.write(jsonpickle.dumps(self.value))
